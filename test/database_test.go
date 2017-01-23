@@ -47,6 +47,33 @@ func TestDbGetFaves(t *testing.T) {
 	}
 }
 
+func TestDbCollections(t *testing.T) {
+	setupTests()
+
+	if len(testingDatabase.Collections) != 0 {
+		t.Errorf("length of collections list at init is not zero")
+	}
+
+	if result := testingDatabase.FindCollection("nonexistent"); result != -1 {
+		t.Errorf("found nonexistent database at index %v", result)
+	}
+
+	testingDatabase.AddCollection("cool collection")
+
+	if len(testingDatabase.Collections) != 1 {
+		t.Errorf("length of collections after adding just one is not 1")
+	}
+	if result := testingDatabase.FindCollection("cool collection"); result != 0 {
+		t.Errorf("thought it found collection at index %v", result)
+	}
+
+	testingDatabase.AddCollection("cool collection")
+
+	if len(testingDatabase.Collections) != 1 {
+		t.Errorf("length of collections after trying to add a duplicate is not 1")
+	}
+}
+
 func TestCollectionAdd(t *testing.T) {
 	setupTests()
 	collection := Collection{Name: "faves"}

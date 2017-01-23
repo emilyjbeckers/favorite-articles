@@ -4,7 +4,7 @@ function loadArticles() {
   faves = updateFavesList();
   $.ajax({
     type: "GET", // GET (from what i understand) is for recieving lightweight amounts of data. cannot send, cannot handle Large amounts
-    url: "/load",
+    url: "/load/articles",
     dataFilter: function(data) { // This thing pipes its answer directly into the success function
       return JSON.parse(data);
     },
@@ -32,7 +32,7 @@ function checkboxHandler(checkbox) {
 
   $.ajax({
     type: "POST",
-    url: "/changes",
+    url: "/faves/changes",
     dataType: "text",
     data: JSON.stringify(changedArticle),
     dataFilter: function(data) { return JSON.parse(data); }
@@ -45,7 +45,7 @@ function updateFavesList() {
   var favorites = [];
   $.ajax({
     type: "GET",
-    url: "/faves",
+    url: "/faves/list",
     dataFilter: function(data) { return JSON.parse(data); },
     success: function(data) {
       var faves = "";
@@ -54,10 +54,26 @@ function updateFavesList() {
         faves = faves.concat(data[i].title, "<br/>");
         favorites.push(data[i].title);
       }
+
       // And rewrite the list
-      $("#faveList").empty();
-      $("#faveList").append(faves);
+      $("#fave-list").empty();
+      $("#fave-list").append(faves);
     }
   });
   return favorites;
+}
+
+// Manage collections
+function manageCollections() {
+  $("#collections-button").empty();
+  $("#manage-collections").append("managing collections");
+  $("#collections-button").append("<button type='button' onclick='closeCollections()'>Close Collection Manager</button>");
+  return;
+}
+
+// close the collection manager
+function closeCollections() {
+  $("#manage-collections").empty();
+  $("#collections-button").empty();
+  $("#collections-button").append('<button type="button" onclick="manageCollections()">Manage Collections</button>');
 }

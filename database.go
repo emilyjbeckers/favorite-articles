@@ -17,8 +17,8 @@ type Collection struct {
 }
 
 // FindDoc finds the index of the given document, or -1 if it does not exist
-func (collection *Collection) FindDoc(doc *Document) int {
-	for i, entry := range collection.Docs {
+func (c *Collection) FindDoc(doc *Document) int {
+	for i, entry := range c.Docs {
 		if doc == entry {
 			return i
 		}
@@ -27,20 +27,20 @@ func (collection *Collection) FindDoc(doc *Document) int {
 }
 
 // AddDoc adds a new document to the colleciton, prevents duplicates
-func (collection *Collection) AddDoc(doc *Document) {
-	if collection.FindDoc(doc) == -1 {
-		collection.Docs = append(collection.Docs, doc)
+func (c *Collection) AddDoc(doc *Document) {
+	if c.FindDoc(doc) == -1 {
+		c.Docs = append(c.Docs, doc)
 	} // Else it's already in there, don't add duplicates
 }
 
 // RemoveDoc removes a dociment from the collection or throws an error if it does not exist
-func (collection *Collection) RemoveDoc(doomed *Document) error {
-	i := collection.FindDoc(doomed)
+func (c *Collection) RemoveDoc(doomed *Document) error {
+	i := c.FindDoc(doomed)
 	if i != -1 {
 		// Delete operation stolen from golang wiki
-		copy(collection.Docs[i:], collection.Docs[i+1:])
-		collection.Docs[len(collection.Docs)-1] = nil // or the zero value of T
-		collection.Docs = collection.Docs[:len(collection.Docs)-1]
+		copy(c.Docs[i:], c.Docs[i+1:])
+		c.Docs[len(c.Docs)-1] = nil // or the zero value of T
+		c.Docs = c.Docs[:len(c.Docs)-1]
 		return nil
 	}
 	return errors.New("Document not in this collection")
@@ -98,4 +98,31 @@ func (db *Database) RemoveFave(doc *Document) error {
 		return errors.New("Document not in favorites")
 	}
 	return nil
+}
+
+// FindCollection returns the index of the collection with the given name or -1 if it does not exist
+func (db *Database) FindCollection(name string) int {
+	for i, collection := range db.Collections {
+		if collection.Name == name {
+			return i
+		}
+	}
+	return -1 // Not found
+}
+
+// GetCollection returns a reference to the collection with the given name, or returns an error if there is no such collection
+func (db *Database) GetCollection(name string) (*Collection, error) {
+	i := db.FindCollection(name)
+	if i == -1 {
+		return nil, errors.New("Collection does not exist")
+	}
+	return &db.Collections[i], nil
+}
+
+// AddCollection adds a collection with the given name to the database (does nothing if the collection already exists)
+func (db *Database) AddCollection(name string) {
+	if db.FindCollection(name) == -1 {
+		db.Collections = append(db.Collections, Collection{Name: name})
+	}
+	// else it already exists, do nothing
 }

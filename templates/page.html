@@ -2,15 +2,25 @@
   <head>
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js">
     </script>
-    <script src="/assets/dist/favorites.js"></script>
+    <script src="/assets/js/favorites.js"></script>
+    <script src="/assets/js/collections.js"></script>
+
   </head>
-  <body onload="loadArticles()">
+  <body onload="loadArticles(); getCollections();">
     <h1>Articles</h1>
     <h3>Select your favorite articles</h3>
     <div id="articles"></div>
-    <div>
-      <h3>Your favorites:</h3>
-      <p id="faveList"></p>
+    <h3>Your favorites:</h3>
+    <div id="faves">
+      <p id="fave-list"></p>
+    </div>
+    <h3>Collection Central</h3>
+    <div id="collections">
+      <div id="collections-list"></div>
+      <div id="collections-button">
+        <button type="button" onclick="manageCollections()">Manage Collections</button>
+      </div>
+      <div id="manage-collections"></div>
     </div>
   </body>
 </head>
