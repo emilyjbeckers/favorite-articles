@@ -23,8 +23,16 @@ func setupDatabase() Database {
 			&Document{"boring cups to avoid"},
 			&placeSettings})
 	db.AddFave(&placeSettings)
-
+	db.AddCollection("cool collection")
+	c, _ := db.GetCollection("cool collection")
+	c.AddDoc(&placeSettings)
 	return db
+}
+
+// Handler for loading the articles into the page
+func loadArticles(w http.ResponseWriter, r *http.Request) {
+	db, _ := sampleDatabase.DocsAsJSON()
+	w.Write(db)
 }
 
 // DocumentReport is a data structure representing the format that the report back from the client about what documents were favorited
@@ -53,6 +61,7 @@ func changesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("success"))
 }
 
+// Send favorites to application
 func favesHandler(w http.ResponseWriter, r *http.Request) {
 	faves := sampleDatabase.GetFaves()
 	newData, err2 := json.Marshal(faves)
@@ -61,10 +70,37 @@ func favesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(newData)
 }
 
-// Handler for loading the articles into the page
-func loadArticles(w http.ResponseWriter, r *http.Request) {
-	db, _ := sampleDatabase.DocsAsJSON()
-	w.Write(db)
+// recieve new collection from application
+func newCollectionHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := ioutil.ReadAll(r.Body)
+	check(err, w)
+
+	var newCollection string
+	check(json.Unmarshal(data, &newCollection), w)
+
+	sampleDatabase.AddCollection(newCollection)
+
+	w.Write([]byte("Success"))
+}
+
+// recieve collection to remove from application and remove it
+func removeCollectionHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := ioutil.ReadAll(r.Body)
+	check(err, w)
+
+	var doomedCollection string
+	check(json.Unmarshal(data, &doomedCollection), w)
+
+	check(sampleDatabase.RemoveCollection(doomedCollection), w)
+
+	w.Write([]byte("Success"))
+}
+
+// send list of collections to application
+func collectionListHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := json.Marshal(sampleDatabase.Collections)
+	check(err, w)
+	w.Write(data)
 }
 
 // Handler for the main page
@@ -76,13 +112,16 @@ func defaultHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	staticPath := http.FileServer(http.Dir("assets/dist"))
-	http.Handle("/assets/dist/", http.StripPrefix("/assets/dist", staticPath))
+	staticPath := http.FileServer(http.Dir("assets/js"))
+	http.Handle("/assets/js/", http.StripPrefix("/assets/js", staticPath))
 	http.HandleFunc("/", defaultHandler)
-	http.HandleFunc("/load", loadArticles)
+	http.HandleFunc("/load/articles", loadArticles)
 	// You need to have the "/faves" here and also in the "url" option in $.ajax or else they wont talk to each other
-	http.HandleFunc("/changes", changesHandler)
-	http.HandleFunc("/faves", favesHandler)
+	http.HandleFunc("/faves/changes", changesHandler)
+	http.HandleFunc("/faves/list", favesHandler)
+	http.HandleFunc("/collection/add", newCollectionHandler)
+	http.HandleFunc("/collection/remove", removeCollectionHandler)
+	http.HandleFunc("/collection/list", collectionListHandler)
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println(err.Error())
