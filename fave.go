@@ -83,6 +83,19 @@ func newCollectionHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Success"))
 }
 
+// recieve collection to remove from application and remove it
+func removeCollectionHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := ioutil.ReadAll(r.Body)
+	check(err, w)
+
+	var doomedCollection string
+	check(json.Unmarshal(data, &doomedCollection), w)
+
+	check(sampleDatabase.RemoveCollection(doomedCollection), w)
+
+	w.Write([]byte("Success"))
+}
+
 // send list of collections to application
 func collectionListHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := json.Marshal(sampleDatabase.Collections)
@@ -107,6 +120,7 @@ func main() {
 	http.HandleFunc("/faves/changes", changesHandler)
 	http.HandleFunc("/faves/list", favesHandler)
 	http.HandleFunc("/collection/add", newCollectionHandler)
+	http.HandleFunc("/collection/remove", removeCollectionHandler)
 	http.HandleFunc("/collection/list", collectionListHandler)
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {

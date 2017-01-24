@@ -2,8 +2,13 @@
 
 package main
 
-import "encoding/json"
-import "errors"
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"regexp"
+	"strings"
+)
 
 // A Document represents a document
 type Document struct {
@@ -13,7 +18,20 @@ type Document struct {
 // A Collection represents a named collection of documents
 type Collection struct {
 	Name string      `json:"name"`
+	Slug string      `json:"slug"`
 	Docs []*Document `json:"docs"`
+}
+
+// MakeCollection creates an empty collection with the given name and an appropriate slug
+func MakeCollection(name string) Collection {
+	// Slug calculation code stolen shamelessly from StackOverflow
+	regex, err := regexp.Compile("[^A-Za-z0-9]+")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	slug := regex.ReplaceAllString(name, "-")
+	slug = strings.ToLower(strings.Trim(slug, "-"))
+	return Collection{Name: name, Slug: slug}
 }
 
 // FindDoc finds the index of the given document, or -1 if it does not exist
@@ -55,7 +73,7 @@ type Database struct {
 
 // MakeDatabase creates a new Database with faves initialized
 func MakeDatabase(docs []*Document) Database {
-	return Database{Docs: docs, Faves: Collection{Name: "Favorites"}}
+	return Database{Docs: docs, Faves: MakeCollection("Favorites")}
 }
 
 // DocsAsJSON returns a JSON representation of the documents in this database
@@ -122,7 +140,20 @@ func (db *Database) GetCollection(name string) (*Collection, error) {
 // AddCollection adds a collection with the given name to the database (does nothing if the collection already exists)
 func (db *Database) AddCollection(name string) {
 	if db.FindCollection(name) == -1 {
-		db.Collections = append(db.Collections, Collection{Name: name})
+		db.Collections = append(db.Collections, MakeCollection(name))
 	}
 	// else it already exists, do nothing
+}
+
+// RemoveCollection removes the given collection from the database or returns an error if it does not exist
+func (db *Database) RemoveCollection(name string) error {
+	i := db.FindCollection(name)
+	if i != -1 {
+		// Delete operation stolen from golang wiki
+		copy(db.Collections[i:], db.Collections[i+1:])
+		db.Collections[len(db.Collections)-1] = Collection{} // or the zero value of T
+		db.Collections = db.Collections[:len(db.Collections)-1]
+		return nil
+	}
+	return errors.New("Collection not in database")
 }

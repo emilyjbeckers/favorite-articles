@@ -4,23 +4,34 @@
     </script>
     <script src="/assets/js/favorites.js"></script>
     <script src="/assets/js/collections.js"></script>
-
+    <style>
+    body {
+      font-family: Verdana, Arial, sans-serif;
+    }
+    h1 {
+      color: blue
+    }
+    </style>
   </head>
-  <body onload="loadArticles(); getCollections();">
+  <body onload="loadArticles(); getCollections('list');">
     <h1>Articles</h1>
-    <h3>Select your favorite articles</h3>
+    <h2>Select your favorite articles</h2>
     <div id="articles"></div>
-    <h3>Your favorites:</h3>
+    <h2>Your favorites:</h2>
     <div id="faves">
       <p id="fave-list"></p>
     </div>
-    <h3>Collection Central</h3>
+    <h1>Collection Central</h1>
     <div id="collections">
       <div id="collections-list"></div>
-      <div id="collections-button">
-        <button type="button" onclick="manageCollections()">Manage Collections</button>
+      <div id="manage-collections">
+        <div id="collections-button">
+          <button type="button" onclick="manageCollections()">Manage Collections</button>
+        </div>
+        <div id="collection-status"></div>
+        <div id="add-collection"></div>
+        <div id="remove-collection"></div>
       </div>
-      <div id="manage-collections"></div>
     </div>
   </body>
 </head>
