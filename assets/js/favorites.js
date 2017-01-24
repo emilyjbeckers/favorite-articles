@@ -12,10 +12,10 @@ function loadArticles() {
       var entries = "";
       for (var i = 0; i < answer.length; i += 1) {
         entries = entries.concat('<p class="article-entry">',
+          '<input type="checkbox" onchange="checkboxHandler(this)"',
+          (faves.includes(answer[i].title) ? " checked> " : "> "),
           answer[i].title,
-          ' <input type="checkbox" onchange="checkboxHandler(this)"',
-          (faves.includes(answer[i].title) ? "checked" : ""),
-          '></p>\n');
+          '</p>\n');
       }
       $("#articles").empty();
       $("#articles").append(entries);
@@ -35,10 +35,10 @@ function checkboxHandler(checkbox) {
     url: "/faves/changes",
     dataType: "text",
     data: JSON.stringify(changedArticle),
-    dataFilter: function(data) { return JSON.parse(data); }
+    success: function(data) {
+      updateFavesList();
+    }
   });
-
-  updateFavesList();
 }
 
 function updateFavesList() {

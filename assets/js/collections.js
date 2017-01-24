@@ -2,24 +2,12 @@
 function manageCollections() {
   console.log("manage collections fired");
   var closeButton = "<button type='button' onclick='closeCollectionsManager()'>Close Collection Manager</button>";
-  var addCollection =
-    '<div id="add-collection-button">'.concat(
-      '<button type="button" onclick="addCollectionsViewer()">Add New Collection</button>',
-    '</div>',
-    '<div id="add-collection-form"></div>',
-    '<div id="close-add-collection-button"></div>');
-  var removeCollection =
-    '<div id="remove-collection-button">'.concat(
-      '<button type="button" onclick="removeCollectionViewer()">Remove Collection</button>',
-    '</div>',
-    '<div id="remove-collection-form"></div>',
-    '<div id="remove-collection-submit"></div>',
-    '<div id="close-remove-collection-button"></div>');
 
   $("#collections-button").empty();
   $("#collections-button").append(closeButton);
-  $("#add-collection").append(addCollection);
-  $("#remove-collection").append(removeCollection);
+  placeEditCollection();
+  placeAddCollection();
+  placeRemoveCollection();
   return;
 }
 
@@ -27,12 +15,62 @@ function manageCollections() {
 function closeCollectionsManager() {
   console.log("close collections fired");
   var manageButton = '<button type="button" onclick="manageCollections()">Manage Collections</button>';
+  $("#edit-collection").empty();
   $("#add-collection").empty();
   $("#remove-collection").empty();
   $("#collection-status").empty();
   $("#collections-button").empty();
   $("#collections-button").append(manageButton);
 }
+
+
+function placeEditCollection() {
+  var editCollection =
+    '<div id="edit-collection-button"></div>';
+  $("#edit-collection").empty();
+  $("#edit-collection").append(editCollection);
+  placeEditCollectionButton();
+}
+
+function placeAddCollection() {
+  var addCollection =
+    '<div id="add-collection-button"></div>'.concat(
+    '<div id="add-collection-form"></div>',
+    '<div id="close-add-collection-button"></div>');
+  $("#add-collection").empty();
+  $("#add-collection").append(addCollection);
+  placeAddCollectionButton();
+}
+
+function placeRemoveCollection() {
+  var removeCollection =
+    '<div id="remove-collection-button"></div>'.concat(
+    '<div id="remove-collection-form"></div>',
+    '<div id="remove-collection-submit"></div>',
+    '<div id="close-remove-collection-button"></div>');
+  $("#remove-collection").empty();
+  $("#remove-collection").append(removeCollection);
+  placeRemoveCollectionButton();
+}
+
+function placeEditCollectionButton() {
+  var button = '<button type="button" onclick="editCollectionsViewer()">Edit Collection</button>';
+  $("#edit-collection-button").empty();
+  $("#edit-collection-button").append(button);
+}
+
+function placeAddCollectionButton() {
+  var collectionButton = '<button type="button" onclick="addCollectionsViewer()">Add Collection</button>';
+  $("#add-collection-button").empty();
+  $("#add-collection-button").append(collectionButton);
+}
+
+function placeRemoveCollectionButton() {
+  var removeCollectionButton = '<button type="button" onclick="removeCollectionViewer()">Remove Collection</button>';
+  $("#remove-collection-button").empty();
+  $("#remove-collection-button").append(removeCollectionButton);
+}
+
 
 // ADD COLLECTIONS
 
@@ -46,6 +84,7 @@ function addCollectionsViewer() {
   var closeButton = '<button type="button" onclick="closeAddCollectionViewer()">Nevermind, I have all the collections I need</button>';
 
   $("#add-collection-button").empty();
+  $("#edit-collection-button").empty();
   $("#remove-collection-button").empty();
   $("#add-collection-form").append(form);
   $("#close-add-collection-button").append(closeButton);
@@ -73,17 +112,9 @@ function submitAddCollection() {
 // Close the add collections viewer
 function closeAddCollectionViewer() {
   console.log("close add collection viewer fired");
-  var addCollection =
-    '<div id="collection-added"></div>'.concat(
-    '<div id="add-collection-button">',
-      '<button type="button" onclick="addCollectionsViewer()">Add New Collection</button>',
-    '</div>',
-    '<div id="add-collection-form"></div>',
-    '<div id="close-add-collection-button"></div>');
-  var removeCollectionButton = '<button type="button" onclick="removeCollectionViewer()">Remove Collection</button>';
-  $("#add-collection").empty();
-  $("#add-collection").append(addCollection);
-  $("#remove-collection-button").append(removeCollectionButton);
+  placeEditCollection();
+  placeAddCollection();
+  placeRemoveCollectionButton();
 }
 
 // REMOVE COLLECTIONS
@@ -96,8 +127,9 @@ function removeCollectionViewer() {
   var submitButton = '<button type="button" onclick="submitRemoveCollection()">Submit</button>';
   var closeButton = '<button type="button" onclick="closeRemoveCollectionViewer()">Nevermind, I like all my collections</button>';
 
-  $("#remove-collection-button").empty();
+  $("#edit-collection-button").empty();
   $("#add-collection-button").empty();
+  $("#remove-collection-button").empty();
   $("#remove-collection-submit").append(submitButton);
   $("#close-remove-collection-button").append(closeButton);
 }
@@ -112,23 +144,14 @@ function submitRemoveCollection() {
     removeCollection(remove);
   }
   closeRemoveCollectionViewer();
-  
+
 }
 
 function closeRemoveCollectionViewer() {
   console.log("close remove collection viewer fired");
-  var removeCollection =
-    '<div id="collection-removed"></div>'.concat(
-    '<div id="remove-collection-button">',
-      '<button type="button" onclick="removeCollectionViewer()">Remove Collection</button>',
-    '</div>',
-    '<div id="remove-collection-form"></div>',
-    '<div id="remove-collection-submit"></div>',
-    '<div id="close-remove-collection-button"></div>');
-  var addCollectionButton = '<button type="button" onclick="addCollectionsViewer()">Add New Collection</button>';
-  $("#remove-collection").empty();
-  $("#remove-collection").append(removeCollection);
-  $("#add-collection-button").append(addCollectionButton);
+  placeRemoveCollection();
+  placeEditCollectionButton();
+  placeAddCollectionButton();
 }
 
 // REQUESTS
