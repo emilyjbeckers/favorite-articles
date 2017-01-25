@@ -9,25 +9,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"text/template"
 )
 
 // A sample 'database' of articles
-var sampleDatabase = setupDatabase()
-
-// Initializes the database
-func setupDatabase() Database {
-	placeSettings := Document{"how to use good place settings to fool your relatives into thinking you have your life together"}
-	db := MakeDatabase(
-		[]*Document{&Document{"cool cookie recipe"},
-			&Document{"boring cups to avoid"},
-			&placeSettings})
-	db.AddFave(&placeSettings)
-	db.AddCollection("cool collection")
-	c, _ := db.GetCollection("cool collection")
-	c.AddDoc(&placeSettings)
-	return db
-}
+var sampleDatabase = setupSampleDatabase()
 
 // Handler for loading the articles into the page
 func loadArticles(w http.ResponseWriter, r *http.Request) {
@@ -103,34 +90,58 @@ func collectionListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-// Handler for the main page
+// Handler for the main page (with the article list)
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
-	// Write the html data into the page
 	tmpl, err := template.ParseFiles("templates/page.html")
 	check(err, w)
 	check(tmpl.ExecuteTemplate(w, "page.html", nil), w)
+}
+
+// HandlerLambda is a funtion that returns a Lambda to be used as a handler
+type HandlerLambda func(w http.ResponseWriter, r *http.Request)
+
+// Set up the handlers for the article pages
+func articlesHandler() {
+
+	tmpl, err := template.ParseFiles("templates/article.html")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	for i := range sampleDatabase.Docs {
+		url := "/articles/" + strconv.Itoa(i)
+		handler := func(i int) HandlerLambda {
+			return func(w http.ResponseWriter, r *http.Request) {
+				check(tmpl.ExecuteTemplate(w, "article.html", sampleDatabase.Docs[i]), w)
+			}
+		}
+		http.HandleFunc(url, handler(i))
+	}
 }
 
 func main() {
 	staticPath := http.FileServer(http.Dir("assets/js"))
 	http.Handle("/assets/js/", http.StripPrefix("/assets/js", staticPath))
 	http.HandleFunc("/", defaultHandler)
+	articlesHandler()
 	http.HandleFunc("/load/articles", loadArticles)
-	// You need to have the "/faves" here and also in the "url" option in $.ajax or else they wont talk to each other
 	http.HandleFunc("/faves/changes", changesHandler)
 	http.HandleFunc("/faves/list", favesHandler)
 	http.HandleFunc("/collection/add", newCollectionHandler)
 	http.HandleFunc("/collection/remove", removeCollectionHandler)
 	http.HandleFunc("/collection/list", collectionListHandler)
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8081", nil)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 }
 
+// Convenience function to check for errors
 func check(err error, w http.ResponseWriter) {
 	if err != nil {
+		// Print to stdout
 		fmt.Println(err.Error())
+		// Print to web console
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
