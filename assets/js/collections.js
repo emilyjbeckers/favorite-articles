@@ -5,7 +5,7 @@ function manageCollections() {
 
   $("#collections-button").empty();
   $("#collections-button").append(closeButton);
-  placeEditCollection();
+  //placeEditCollection();
   placeAddCollection();
   placeRemoveCollection();
   return;
@@ -22,7 +22,6 @@ function closeCollectionsManager() {
   $("#collections-button").empty();
   $("#collections-button").append(manageButton);
 }
-
 
 function placeEditCollection() {
   var editCollection =
@@ -45,8 +44,10 @@ function placeAddCollection() {
 function placeRemoveCollection() {
   var removeCollection =
     '<div id="remove-collection-button"></div>'.concat(
-    '<div id="remove-collection-form"></div>',
-    '<div id="remove-collection-submit"></div>',
+    //'<div id="remove-collection-form"></div>',
+    '<div id="collection-dropdown"></div>',
+    //'<div id="remove-collection-submit"></div>',
+    '<div id="collection-dropdown-submit"></div>',
     '<div id="close-remove-collection-button"></div>');
   $("#remove-collection").empty();
   $("#remove-collection").append(removeCollection);
@@ -126,20 +127,21 @@ function removeCollectionViewer() {
 
   var submitButton = '<button type="button" onclick="submitRemoveCollection()">Submit</button>';
   var closeButton = '<button type="button" onclick="closeRemoveCollectionViewer()">Nevermind, I like all my collections</button>';
+  var prompt = '<p>Select a collection to remove</p>';
 
   $("#edit-collection-button").empty();
   $("#add-collection-button").empty();
   $("#remove-collection-button").empty();
-  $("#remove-collection-submit").append(submitButton);
+  $("#collection-dropdown").prepend(prompt);
+  $("#collection-dropdown-submit").append(submitButton);
   $("#close-remove-collection-button").append(closeButton);
 }
-
 
 function submitRemoveCollection() {
   console.log("submit remove collection fired");
   var sure = confirm("Are you sure you'd like to remove this collection? This action cannot be undone.");
   if (sure) {
-    var remove = document.getElementById("remove-collection-list").value;
+    var remove = document.getElementById("collection-dropdown-list").value;
     console.log(remove);
     removeCollection(remove);
   }
@@ -156,24 +158,28 @@ function closeRemoveCollectionViewer() {
 
 // REQUESTS
 
-// Get the current collections from the server and render them in some way
-function getCollections(kind) {
+// REQUEST: Get the current collections from the server and render them in some way
+// Title argument only required if kind === "checklist"
+function getCollections(kind, title) {
   console.log("get collections fired");
   $.ajax({
     type: "POST",
     url: "/collection/list",
     dataFilter: function(data) { return JSON.parse(data); },
     success: function(data) {
+      // There is probably some really nice dynamic dispatch way of doing this
       if (kind === "list") {
         viewCollectionsList(data);
       } else if (kind === "dropdown") {
         viewCollectionsDropdown(data);
+      } else if (kind === "checklist") {
+        viewCollectionsChecklist(data, title);
       }
     }
   });
 }
 
-// Ask the server to add the given collection
+// REQUEST: Ask the server to add the given collection
 function addCollection(name) {
   console.log("add collection fired");
   $.ajax({
@@ -190,7 +196,7 @@ function addCollection(name) {
   });
 }
 
-// Ask the server to remove the given collection
+// REQUEST: Ask the server to remove the given collection
 function removeCollection(name) {
   console.log("remove collection fired");
   $.ajax({
@@ -203,6 +209,24 @@ function removeCollection(name) {
       $("#collection-status").empty();
       $("#collection-status").append(removedCollection);
       getCollections("list");
+    }
+  });
+}
+
+// REQUEST: Ask the server to add the given article to the given collection, with an optional kind to display the new information when done
+function addToCollection(article, collection, toAdd, kind) {
+  // Must unmarshal into CollectionReport
+  var toSend = {article: article.trim(), collection: collection.trim(), toAdd: toAdd};
+  console.log(toSend);
+  $.ajax({
+    type: "POST",
+    url: "/collection/changes",
+    datatype: "text",
+    data: JSON.stringify(toSend),
+    success: function(data) {
+      if (kind !== undefined) {
+        getCollections(kind, article);
+      }
     }
   });
 }
@@ -248,13 +272,11 @@ function viewCollectionsDropdown(collections) {
   var html = "";
 
   if (collections === null) {
-    $("#remove-collection-form").append("You have no collections! Try adding some.");
+    $("#collection-dropdown").append("You have no collections! Try adding some.");
     return;
   }
 
-  html = html.concat(
-    '<p>Select a collection to remove</p>',
-    '<select id="remove-collection-list">');
+  html = html.concat('<select id="collection-dropdown-list">');
 
   for (var i = 0; i < collections.length; i += 1) {
     var numArticles = 0;
@@ -267,7 +289,36 @@ function viewCollectionsDropdown(collections) {
   }
   html = html.concat('</select>');
 
-  $("#remove-collection-form").empty();
-  $("#remove-collection-form").append(html);
+  $("#collection-dropdown").append(html);
 
+}
+
+// Render collections in a checklist
+function viewCollectionsChecklist(collections, title) {
+  console.log("view collections checklist fired");
+
+  var html = "";
+
+  if (collections === null) {
+    $("#collection-checklist").append("You have no collections! Try adding some.");
+    return;
+  }
+
+  for (var i = 0; i < collections.length; i += 1) {
+    var alreadyIn = false;
+
+    if (collections[i].docs !== null) {
+      for (var j = 0; j < collections[i].docs.length; j += 1) {
+        alreadyIn = alreadyIn || collections[i].docs[j].title === title;
+      }
+    }
+
+    html = html.concat(
+      '<p><input type="checkbox" onchange="updateInCollection(this)"',
+      alreadyIn ? ' checked>' : '>',
+      collections[i].name, '</p>');
+  }
+  console.log(html);
+  $("#collection-checklist").empty();
+  $("#collection-checklist").append(html);
 }

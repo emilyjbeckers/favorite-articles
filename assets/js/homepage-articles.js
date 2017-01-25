@@ -3,7 +3,7 @@ function loadArticles() {
   $("#articles").append("Loading articles...");
   faves = updateFavesList();
   $.ajax({
-    type: "GET", // GET (from what i understand) is for recieving lightweight amounts of data. cannot send, cannot handle Large amounts
+    type: "GET",
     url: "/load/articles",
     dataFilter: function(data) { // This thing pipes its answer directly into the success function
       return JSON.parse(data);
