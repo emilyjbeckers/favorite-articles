@@ -1,163 +1,3 @@
-// Manage collections
-function manageCollections() {
-  console.log("manage collections fired");
-  var closeButton = "<button type='button' onclick='closeCollectionsManager()'>Close Collection Manager</button>";
-
-  $("#collections-button").empty();
-  $("#collections-button").append(closeButton);
-  //placeEditCollection();
-  placeAddCollection();
-  placeRemoveCollection();
-  return;
-}
-
-// close the collection manager
-function closeCollectionsManager() {
-  console.log("close collections fired");
-  var manageButton = '<button type="button" onclick="manageCollections()">Manage Collections</button>';
-  $("#edit-collection").empty();
-  $("#add-collection").empty();
-  $("#remove-collection").empty();
-  $("#collection-status").empty();
-  $("#collections-button").empty();
-  $("#collections-button").append(manageButton);
-}
-
-function placeEditCollection() {
-  var editCollection =
-    '<div id="edit-collection-button"></div>';
-  $("#edit-collection").empty();
-  $("#edit-collection").append(editCollection);
-  placeEditCollectionButton();
-}
-
-function placeAddCollection() {
-  var addCollection =
-    '<div id="add-collection-button"></div>'.concat(
-    '<div id="add-collection-form"></div>',
-    '<div id="close-add-collection-button"></div>');
-  $("#add-collection").empty();
-  $("#add-collection").append(addCollection);
-  placeAddCollectionButton();
-}
-
-function placeRemoveCollection() {
-  var removeCollection =
-    '<div id="remove-collection-button"></div>'.concat(
-    //'<div id="remove-collection-form"></div>',
-    '<div id="collection-dropdown"></div>',
-    //'<div id="remove-collection-submit"></div>',
-    '<div id="collection-dropdown-submit"></div>',
-    '<div id="close-remove-collection-button"></div>');
-  $("#remove-collection").empty();
-  $("#remove-collection").append(removeCollection);
-  placeRemoveCollectionButton();
-}
-
-function placeEditCollectionButton() {
-  var button = '<button type="button" onclick="editCollectionsViewer()">Edit Collection</button>';
-  $("#edit-collection-button").empty();
-  $("#edit-collection-button").append(button);
-}
-
-function placeAddCollectionButton() {
-  var collectionButton = '<button type="button" onclick="addCollectionsViewer()">Add Collection</button>';
-  $("#add-collection-button").empty();
-  $("#add-collection-button").append(collectionButton);
-}
-
-function placeRemoveCollectionButton() {
-  var removeCollectionButton = '<button type="button" onclick="removeCollectionViewer()">Remove Collection</button>';
-  $("#remove-collection-button").empty();
-  $("#remove-collection-button").append(removeCollectionButton);
-}
-
-
-// ADD COLLECTIONS
-
-// View the Add collections editor
-function addCollectionsViewer() {
-  console.log("add collections viewer fired");
-  var form =
-    "<p>Adding Collection...</p>".concat(
-      "<p>Collection name: <input type='text' name='collection-name' id='input-collection-name'><br/>",
-      "<input type='button' value='Submit' onclick='submitAddCollection()'><br/></p>");
-  var closeButton = '<button type="button" onclick="closeAddCollectionViewer()">Nevermind, I have all the collections I need</button>';
-
-  $("#add-collection-button").empty();
-  $("#edit-collection-button").empty();
-  $("#remove-collection-button").empty();
-  $("#add-collection-form").append(form);
-  $("#close-add-collection-button").append(closeButton);
-}
-
-// submission of new collection
-function submitAddCollection() {
-  console.log("submit add collection fired");
-
-  var collectionButton = '<button type="button" onclick="addCollectionsViewer()">Add Another Collection</button>';
-
-  var collectionName = document.getElementById("input-collection-name").value.trim();
-
-  if (collectionName !== "") {
-    addCollection(collectionName);
-  } else {
-    return;
-  }
-
-  closeAddCollectionViewer();
-  $("#add-collection-button").empty();
-  $("#add-collection-button").append(collectionButton);
-}
-
-// Close the add collections viewer
-function closeAddCollectionViewer() {
-  console.log("close add collection viewer fired");
-  placeEditCollection();
-  placeAddCollection();
-  placeRemoveCollectionButton();
-}
-
-// REMOVE COLLECTIONS
-
-// View the remove collections menu
-function removeCollectionViewer() {
-  console.log("remove collection viewer fired");
-  getCollections("dropdown"); // Modifies #remove-collection-form
-
-  var submitButton = '<button type="button" onclick="submitRemoveCollection()">Submit</button>';
-  var closeButton = '<button type="button" onclick="closeRemoveCollectionViewer()">Nevermind, I like all my collections</button>';
-  var prompt = '<p>Select a collection to remove</p>';
-
-  $("#edit-collection-button").empty();
-  $("#add-collection-button").empty();
-  $("#remove-collection-button").empty();
-  $("#collection-dropdown").prepend(prompt);
-  $("#collection-dropdown-submit").append(submitButton);
-  $("#close-remove-collection-button").append(closeButton);
-}
-
-function submitRemoveCollection() {
-  console.log("submit remove collection fired");
-  var sure = confirm("Are you sure you'd like to remove this collection? This action cannot be undone.");
-  if (sure) {
-    var remove = document.getElementById("collection-dropdown-list").value;
-    console.log(remove);
-    removeCollection(remove);
-  }
-  closeRemoveCollectionViewer();
-
-}
-
-function closeRemoveCollectionViewer() {
-  console.log("close remove collection viewer fired");
-  placeRemoveCollection();
-  placeEditCollectionButton();
-  placeAddCollectionButton();
-}
-
-// REQUESTS
-
 // REQUEST: Get the current collections from the server and render them in some way
 // Title argument only required if kind === "checklist"
 function getCollections(kind, title) {
@@ -179,8 +19,8 @@ function getCollections(kind, title) {
   });
 }
 
-// REQUEST: Ask the server to add the given collection
-function addCollection(name) {
+// REQUEST: Ask the server to add the given collection, with optional kind and title arguments to render after server has completed the operation
+function addCollection(name, kind, title) {
   console.log("add collection fired");
   $.ajax({
     type: "POST",
@@ -191,7 +31,9 @@ function addCollection(name) {
       var addedCollection = '<p>Collection '.concat(name, ' added.</p>');
       $("#collection-status").empty();
       $("#collection-status").append(addedCollection);
-      getCollections("list");
+      if (kind !== undefined) {
+        getCollections(kind, title);
+      }
     }
   });
 }
@@ -253,8 +95,10 @@ function viewCollectionsList(collections) {
       collectionsHtml = collectionsHtml.concat("</ul>");
       continue; // If there's no documents in this collection, skip ahead to the next one
     }
-
     for (var j = 0; j < collections[i].docs.length; j += 1) {
+      if (collections[i].docs[j] === null) {
+        continue;
+      }
       collectionsHtml = collectionsHtml.concat("<li>", collections[i].docs[j].title, "</li>");
     }
 
@@ -309,6 +153,9 @@ function viewCollectionsChecklist(collections, title) {
 
     if (collections[i].docs !== null) {
       for (var j = 0; j < collections[i].docs.length; j += 1) {
+        if (collections[i].docs[j] === null) {
+          continue;
+        }
         alreadyIn = alreadyIn || collections[i].docs[j].title === title;
       }
     }

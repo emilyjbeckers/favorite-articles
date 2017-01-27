@@ -15,6 +15,7 @@ type Document struct {
 	ID    int    `json:"id"`
 	Title string `json:"title"`
 	Body  string `json:"body"`
+	Image string `json:"image"`
 }
 
 // A Collection represents a named collection of documents
@@ -53,7 +54,7 @@ func (c *Collection) AddDoc(doc *Document) {
 	} // Else it's already in there, don't add duplicates
 }
 
-// RemoveDoc removes a dociment from the collection or throws an error if it does not exist
+// RemoveDoc removes a document from the collection or throws an error if it does not exist
 func (c *Collection) RemoveDoc(doomed *Document) error {
 	i := c.FindDoc(doomed)
 	if i != -1 {
@@ -68,9 +69,9 @@ func (c *Collection) RemoveDoc(doomed *Document) error {
 
 // Database represents a database containing documents and collections
 type Database struct {
-	Docs        []*Document  `json:"docs"`
-	Faves       Collection   `json:"faves"`
-	Collections []Collection `json:"collections"`
+	Docs        []*Document   `json:"docs"`
+	Faves       Collection    `json:"faves"`
+	Collections []*Collection `json:"collections"`
 }
 
 // MakeDatabase creates a new Database with faves initialized
@@ -104,18 +105,22 @@ func (db *Database) GetFaves() []*Document {
 
 // AddFave adds an existing document to the list of favorites
 func (db *Database) AddFave(doc *Document) error {
-	if doc == nil {
+	document := db.FindDocument(doc.Title)
+	if document == nil {
 		return errors.New("Document does not exist. Add it to the database first")
 	}
-	db.Faves.AddDoc(doc)
+	db.Faves.AddDoc(document)
 	return nil
 }
 
-// RemoveFave removes a document from favorites list (but not from the database)
+// RemoveFave removes a document from favorites list and all collections (but not from the database)
 func (db *Database) RemoveFave(doc *Document) error {
 	err := db.Faves.RemoveDoc(doc)
 	if err != nil {
 		return errors.New("Document not in favorites")
+	}
+	for _, collection := range db.Collections {
+		collection.RemoveDoc(doc)
 	}
 	return nil
 }
@@ -136,13 +141,14 @@ func (db *Database) GetCollection(name string) (*Collection, error) {
 	if i == -1 {
 		return nil, errors.New("Collection does not exist")
 	}
-	return &db.Collections[i], nil
+	return db.Collections[i], nil
 }
 
 // AddCollection adds a collection with the given name to the database (does nothing if the collection already exists)
 func (db *Database) AddCollection(name string) {
 	if db.FindCollection(name) == -1 {
-		db.Collections = append(db.Collections, MakeCollection(name))
+		newCollection := MakeCollection(name)
+		db.Collections = append(db.Collections, &newCollection)
 	}
 	// else it already exists, do nothing
 }
@@ -153,7 +159,7 @@ func (db *Database) RemoveCollection(name string) error {
 	if i != -1 {
 		// Delete operation stolen from golang wiki
 		copy(db.Collections[i:], db.Collections[i+1:])
-		db.Collections[len(db.Collections)-1] = Collection{} // or the zero value of T
+		db.Collections[len(db.Collections)-1] = nil // or the zero value of T
 		db.Collections = db.Collections[:len(db.Collections)-1]
 		return nil
 	}
@@ -163,11 +169,11 @@ func (db *Database) RemoveCollection(name string) error {
 // Initialize a sample database
 // Initializes the database
 func setupSampleDatabase() Database {
-	cookies := Document{ID: 0, Title: "cool cookie recipe", Body: "First, you have to buy ingredients, so flour (not flower) and sugar and also any little doodads that you want to put on top. Then you have to put all the stuff in a bowl (not the doodads) and mix it up, trying to avoid making a big mess. Then you put that into your oven and set a timer on your phone so that you dont forget about it. Once your timer goes off, remove the cookies from the oven safely and put the doodads on top. Take a picture of them and post it on social media so that everyone can compliment you on them and make you feel better about the fact that they're misshapen and kind of gross."}
+	cookies := Document{ID: 0, Title: "cool cookie recipe", Body: "First, you have to buy ingredients, so flour (not flower) and sugar and also any little doodads that you want to put on top. Then you have to put all the stuff in a bowl (not the doodads) and mix it up, trying to avoid making a big mess. Then you put that into your oven and set a timer on your phone so that you dont forget about it. Once your timer goes off, remove the cookies from the oven safely and put the doodads on top. Take a picture of them and post it on social media so that everyone can compliment you on them and make you feel better about the fact that they're misshapen and kind of gross.", Image: "cookie.png"}
 
-	cups := Document{ID: 1, Title: "boring cups to avoid", Body: "We all know how frustrating it is to have your friends come over and then leave because your cups are too boring. In this article, we will examine how to tell if a cup is boring. If a cup is just one color, then it is probable boring. If the cup has a straw that is straight then the cup is probably boring, unless that straw is part of the character that the cup is supposed to look like. In fact, that's a better rule. If a cup is made to look like a character from a children's movie, then the cup is not boring. If you have any cups that do not fit this criterion, then they are boring and you must throw them out immediately and purchase cups that are not boring."}
+	cups := Document{ID: 1, Title: "boring cups to avoid", Body: "We all know how frustrating it is to have your friends come over and then leave because your cups are too boring. In this article, we will examine how to tell if a cup is boring. If a cup is just one color, then it is probable boring. If the cup has a straw that is straight then the cup is probably boring, unless that straw is part of the character that the cup is supposed to look like. In fact, that's a better rule. If a cup is made to look like a character from a children's movie, then the cup is not boring. If you have any cups that do not fit this criterion, then they are boring and you must throw them out immediately and purchase cups that are not boring.", Image: "cups.jpg"}
 
-	placeSettings := Document{ID: 2, Title: "how to use good place settings to fool your relatives into thinking you have your life together", Body: "Everybody knows that having good place settings is the easiest way to show your relatives that you have your life together, but what if you don't? Like many people your age, you are probably thinking, 'I do not have my life together, but I would like my relatives to think I do. Wearing a t-shirt that says 'I HAVE MY LIFE TOGETHER' every time they come over doesn't seem to be working. How can I trick them into thinking that I have my life together without lying to them?' The answer is that you cannot do this without a little bit of subterfuge, but only a small amount. The key is to set your table with placemats, plates, bowls, and a minimum of four glasses and three of each type of silverware at each place. If you cannot fit them all, purchase smaller china and utensils (do NOT uninvite relatives). With your place settings perfectly laid out, your relatives will focus on questions about politics and racism instead of asking about when you will get a boyfriend or a job."}
+	placeSettings := Document{ID: 2, Title: "how to use good place settings to fool your relatives into thinking you have your life together", Body: "Everybody knows that having good place settings is the easiest way to show your relatives that you have your life together, but what if you don't? Like many people your age, you are probably thinking, 'I do not have my life together, but I would like my relatives to think I do. Wearing a t-shirt that says 'I HAVE MY LIFE TOGETHER' every time they come over doesn't seem to be working. How can I trick them into thinking that I have my life together without lying to them?' The answer is that you cannot do this without a little bit of subterfuge, but only a small amount. The key is to set your table with placemats, plates, bowls, and a minimum of four glasses and three of each type of silverware at each place. If you cannot fit them all, purchase smaller china and utensils (do NOT uninvite relatives). With your place settings perfectly laid out, your relatives will focus on questions about politics and racism instead of asking about when you will get a boyfriend or a job.", Image: "place-setting.png"}
 	db := MakeDatabase([]*Document{&cookies, &cups, &placeSettings})
 	db.AddFave(&placeSettings)
 	db.AddCollection("cool collection")

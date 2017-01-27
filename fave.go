@@ -104,8 +104,6 @@ func collectionChangesHandler(w http.ResponseWriter, r *http.Request) {
 	var report CollectionReport
 	check(json.Unmarshal(data, &report), w)
 
-	fmt.Println(report.Collection)
-	fmt.Println(report.Article)
 	collection, err2 := sampleDatabase.GetCollection(report.Collection)
 	check(err2, w)
 	doc := sampleDatabase.FindDocument(report.Article)
@@ -165,8 +163,8 @@ func articlesHandler() {
 
 func main() {
 	// These two lines put any external files referenced by the html so that they can be seen. Using vanilla Golang, your file structure can be whatever you want as long as you get these right (note where the slashes are)
-	staticPath := http.FileServer(http.Dir("assets/js"))
-	http.Handle("/assets/js/", http.StripPrefix("/assets/js", staticPath))
+	staticPath := http.FileServer(http.Dir("assets"))
+	http.Handle("/assets/", http.StripPrefix("/assets", staticPath))
 
 	// This loads in the html for the homepage
 	http.HandleFunc("/", defaultHandler)

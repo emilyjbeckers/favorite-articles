@@ -14,6 +14,7 @@ function checkboxHandler(checkbox) {
     success: function(data) {
       // Now that the server has updated which articles are favorited, we need to update our favorites list through another call.
       updateFavesList();
+      getCollections('list');
     }
   });
 }
@@ -43,4 +44,20 @@ function updateFavesList() {
     }
   });
   return favorites;
+}
+
+// Add the named article to favorites
+function favoriteArticle(title) {
+  console.log("favorite fired");
+  changeFave(title, true);
+  placeUnfavoriteButton();
+  placeAddToCollectionViewer();
+}
+
+// Remove the named article from favorites
+function unfavoriteArticle(title) {
+  console.log("unfavorite fired");
+  changeFave(title, false);
+  placeFavoriteButton();
+  $("#article-collection").empty();
 }

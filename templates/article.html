@@ -2,10 +2,14 @@
   <head>
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
     <script src="/assets/js/article-page.js"></script>
+    <script src="/assets/js/favorites.js"></script>
     <script src="/assets/js/collections.js"></script>
   </head>
   <body onload="loadArticle('{{.ID}}')">
     <h1 id="article-title">{{.Title}}</h1>
+    <div id="article-photo">
+      <img src="/assets/img/{{.Image}}" alt="image not found">
+    </div>
     <div id="article-content">
       <p>{{.Body}}</p>
     </div>
