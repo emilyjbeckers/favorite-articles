@@ -80,6 +80,7 @@ function submitAddCollection() {
 
   if (collectionName !== "") {
     addCollection(collectionName, "checklist", getTitle());
+    addToCollection(getTitle(), collectionName, true, "checklist");
   } else {
     return;
   }

@@ -1,4 +1,5 @@
 // Simulates getting responses from the database
+// Actual database connection left as exercise for the reader
 
 package main
 

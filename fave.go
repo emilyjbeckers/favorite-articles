@@ -26,6 +26,34 @@ func loadArticles(w http.ResponseWriter, r *http.Request) {
 	w.Write(db)
 }
 
+// Load in all handlers and start the server
+func main() {
+	// These two lines put any external files referenced by the html so that they can be seen. Using vanilla Golang, your file structure can be whatever you want as long as you get these right (note where the slashes are)
+	staticPath := http.FileServer(http.Dir("assets"))
+	http.Handle("/assets/", http.StripPrefix("/assets", staticPath))
+
+	// This loads in the html for the homepage
+	http.HandleFunc("/", defaultHandler)
+	articlesHandler()
+
+	// These listen for requests sent over the server
+	http.HandleFunc("/load/articles", loadArticles)
+	// Example of handler that recieves data from the client
+	http.HandleFunc("/faves/changes", changesHandler)
+	// Example of handler that sends data to the client
+	http.HandleFunc("/faves/list", favesHandler)
+	http.HandleFunc("/collection/add", newCollectionHandler)
+	http.HandleFunc("/collection/remove", removeCollectionHandler)
+	http.HandleFunc("/collection/list", collectionListHandler)
+	http.HandleFunc("/collection/changes", collectionChangesHandler)
+
+	// This is what actually puts the pages onto the browser
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
 // DocumentReport is a data structure representing the format that the report back from the client about what documents were favorited
 type DocumentReport struct {
 	Title string `json:"title"`
@@ -158,33 +186,6 @@ func articlesHandler() {
 		}
 		// Call our temporary handler function on this article id
 		http.HandleFunc(url, handler(i))
-	}
-}
-
-func main() {
-	// These two lines put any external files referenced by the html so that they can be seen. Using vanilla Golang, your file structure can be whatever you want as long as you get these right (note where the slashes are)
-	staticPath := http.FileServer(http.Dir("assets"))
-	http.Handle("/assets/", http.StripPrefix("/assets", staticPath))
-
-	// This loads in the html for the homepage
-	http.HandleFunc("/", defaultHandler)
-	articlesHandler()
-
-	// These listen for requests sent over the server
-	http.HandleFunc("/load/articles", loadArticles)
-	// Example of handler that recieves data from the client
-	http.HandleFunc("/faves/changes", changesHandler)
-	// Example of handler that sends data to the client
-	http.HandleFunc("/faves/list", favesHandler)
-	http.HandleFunc("/collection/add", newCollectionHandler)
-	http.HandleFunc("/collection/remove", removeCollectionHandler)
-	http.HandleFunc("/collection/list", collectionListHandler)
-	http.HandleFunc("/collection/changes", collectionChangesHandler)
-
-	// This is what actually puts the pages onto the browser
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		fmt.Println(err.Error())
 	}
 }
 
